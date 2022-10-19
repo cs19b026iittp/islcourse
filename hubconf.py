@@ -13,59 +13,78 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-training_data = datasets.FashionMNIST(
-    root="data",
-    train=True,
-    download=True,
-    transform=ToTensor(),
-)
-
-# Download test data from open datasets.
-test_data = datasets.FashionMNIST(
-    root="data",
-    train=False,
-    download=True,
-    transform=ToTensor(),
-)
-
 loss_fn = nn.CrossEntropyLoss()
 # Define a neural network YOUR ROLL NUMBER (all small letters) should prefix the classname
 class cs19b026NN(nn.Module):
   def __init__(self):
-    super(Net, self).__init__()
-    # 1 input image channel, 6 output channels, 5x5 square convolution
-    # kernel
-    self.conv1 = nn.Conv2d(1, 6, 5)
-    self.conv2 = nn.Conv2d(6, 16, 5)
-    # an affine operation: y = Wx + b
-    self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5*5 from image dimension
-    self.fc2 = nn.Linear(120, 84)
-    self.fc3 = nn.Linear(84, 10)
-  def forward(self, x):
-    # Max pooling over a (2, 2) window
-    x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-    # If the size is a square, you can specify with a single number
-    x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-    x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
-    x = F.relu(self.fc1(x))
-    x = F.relu(self.fc2(x))
-    x = self.fc3(x)
-    return x
-    
-# sample invocation torch.hub.load(myrepo,'get_model',train_data_loader=train_data_loader,n_epochs=5, force_reload=True)
-def get_model(train_data_loader=None, n_epochs=10):
-  model = None
+    super(cs19b026NN, self).__init__()
+      self.flatten = nn.Flatten()
+      self.linear_relu_stack = nn.Sequential(
+        nn.Linear(28*28, 512),
+        nn.ReLU(),
+        nn.Linear(512, 512),
+        nn.ReLU(),
+        nn.Linear(512, 10)
+      )
 
-  # write your code here as per instructions
-  # ... your code ...
-  # ... your code ...
-  # ... and so on ...
-  # Use softmax and cross entropy loss functions
-  # set model variable to proper object, make use of train_data
+  def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
+
+def load_data():
+  training_data = datasets.FashionMNIST(
+    root="data",
+    train=True,
+    download=True,
+    transform=ToTensor(),
+  )
+
+# Download test data from open datasets.
+  test_data = datasets.FashionMNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=ToTensor(),
+  )
+  return training_data, test_data
+
+def create_dataloaders(training_data, test_data, batch_size=64):
+    # Create data loaders.
+    train_dataloader = DataLoader(training_data, batch_size=batch_size)
+    test_dataloader = DataLoader(test_data, batch_size=batch_size)
+
+    for X, y in test_dataloader:
+        print(f"Shape of X [N, C, H, W]: {X.shape}")
+        print(f"Shape of y: {y.shape} {y.dtype}")
+        break
+    print('returning dataloaders')
+    return train_dataloader, test_dataloader
+
+# sample invocation torch.hub.load(myrepo,'get_model',train_data_loader=train_data_loader,n_epochs=5, force_reload=True)
+training_data, test_data = load_data();
+train_dataloader, test_dataloader = create_dataloaders(training_data, test_data, batch_size=64)
+
+def get_model(train_data_loader=None, n_epochs=10):
+  model = cs19b026NN().to(device)
+  optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+
+  for i, (images, labels) in enumerate(train_data_loader):
+    images = images.to(device)
+    labels = labels.to(device)
+
+    outputs = model(images)
+    loss = loss_fn(outputs, labels)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    if batch % 100 == 0:
+      loss, current = loss.item(), batch * len(X)
+      print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+    print ('Returning model... (rollnumber: xx)')
   
-  print ('Returning model... (rollnumber: xx)')
-  
-  return model
+    return model
 
 # sample invocation torch.hub.load(myrepo,'get_model_advanced',train_data_loader=train_data_loader,n_epochs=5, force_reload=True)
 def get_model_advanced(train_data_loader=None, n_epochs=10,lr=1e-4,config=None):
