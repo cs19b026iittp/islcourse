@@ -12,6 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 loss_fn = nn.CrossEntropyLoss()
 # Define a neural network YOUR ROLL NUMBER (all small letters) should prefix the classname
@@ -86,6 +87,29 @@ def get_model(train_data_loader=None, n_epochs=10):
   
     return model
 
+def get_model_advanced(train_data_loader=None, n_epochs=10,lr=1e-4,config=None):
+  model = None
+
+  # write your code here as per instructions
+  # ... your code ...
+  # ... your code ...
+  # ... and so on ...
+  # Use softmax and cross entropy loss functions
+  # set model variable to proper object, make use of train_data
+  
+  # In addition,
+  # Refer to config dict, where learning rate is given, 
+  # List of (in_channels, out_channels, kernel_size, stride=1, padding='same')  are specified
+  # Example, config = [(1,10,(3,3),1,'same'), (10,3,(5,5),1,'same'), (3,1,(7,7),1,'same')], it can have any number of elements
+  # You need to create 2d convoution layers as per specification above in each element
+  # You need to add a proper fully connected layer as the last layer
+  
+  # HINT: You can print sizes of tensors to get an idea of the size of the fc layer required
+  # HINT: Flatten function can also be used if required
+  return
+
+model = get_model()
+
 # sample invocation torch.hub.load(myrepo,'get_model_advanced',train_data_loader=train_data_loader,n_epochs=5, force_reload=True)
 def get_model_advanced(train_data_loader=None, n_epochs=10,lr=1e-4,config=None):
   model = None
@@ -109,20 +133,62 @@ def get_model_advanced(train_data_loader=None, n_epochs=10,lr=1e-4,config=None):
   return model
   
   
-  print ('Returning model... (rollnumber: xx)')
+  print ('Returning model... (rollnumber: cs19b026)')
   
   return model
 
 # sample invocation torch.hub.load(myrepo,'test_model',model1=model,test_data_loader=test_data_loader,force_reload=True)
-def test_model(model1=None, test_data_loader=None):
+def test_model(model1=model, test_data_loader=test_dataloader,force_reload=True):
 
   accuracy_val, precision_val, recall_val, f1score_val = 0, 0, 0, 0
-  # write your code here as per instructions
-  # ... your code ...
-  # ... your code ...
-  # ... and so on ...
-  # calculate accuracy, precision, recall and f1score
+
+  size = len(test_data_loader.dataset)
+  num_batches = len(test_data_loader)
+  model1.eval()
+  test_loss, correct = 0, 0
+  with torch.no_grad():
+      for X, y in test_data_loader:
+          X, y = X.to(device), y.to(device)
+          pred = model1(X)
+          test_loss += loss_fn(pred, y).item()
+          correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+  test_loss /= num_batches
+  correct /= size
+
+
+  accuracy_val = correct
+
+  classes = [
+    "BMW",
+    "Mecedes",
+    "Porche",
+    "Ducati",
+    "Cullinen",
+    "Suzuki",
+    "Skoda",
+    "Volvo",
+    "Bentley",
+    "Audi",
+  ]
+
+  model = model1.eval()
+  x = []
+  y = [] 
+  y1 = []
+  for i in test_data :
+    x.append(i[0])
+    y.append(i[1])
+    with torch.no_grad():
+      pred = model(i[0])
+      predicted = pred[0].argmax(0)
+      # print()
+      y1.append(classes.index(classes[predicted]))
   
-  print ('Returning metrics... (rollnumber: xx)')
+  print ('Returning metrics... (rollnumber: cs19b026)')
+  print(y)
+  print(y1)
+  precision_recall_fscore_support(y, y1, average='macro')
   
   return accuracy_val, precision_val, recall_val, f1score_val
+
+ans = test_model()
